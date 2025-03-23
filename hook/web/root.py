@@ -113,7 +113,7 @@ class Web:
     def _check_session(self, request: web.Request) -> bool:
         return (
             request.cookies.get("session", None) in self._sessions
-            if main.hikka.clients
+            if main.hook.clients
             else True
         )
 
@@ -267,7 +267,7 @@ class Web:
             if self._2fa_needed:
                 return web.Response(status=403, body="2FA")
 
-            await main.hikka.save_client_session(self._pending_client)
+            await main.hook.save_client_session(self._pending_client)
             return web.Response(status=200, body="SUCCESS")
 
         if self._qr_login is None:
@@ -382,7 +382,7 @@ class Web:
             )
 
         logger.debug("2FA code accepted, logging in")
-        await main.hikka.save_client_session(self._pending_client)
+        await main.hook.save_client_session(self._pending_client)
         return web.Response()
 
     async def tg_code(self, request: web.Request) -> web.Response:
@@ -441,7 +441,7 @@ class Web:
                     body=(self._render_fw_error(e)),
                 )
 
-        await main.hikka.save_client_session(self._pending_client)
+        await main.hook.save_client_session(self._pending_client)
         return web.Response()
 
     async def finish_login(self, request: web.Request) -> web.Response:
@@ -451,10 +451,10 @@ class Web:
         if not self._pending_client:
             return web.Response(status=400)
 
-        first_session = not bool(main.hikka.clients)
+        first_session = not bool(main.hook.clients)
 
         # Client is ready to pass in to dispatcher
-        main.hikka.clients = list(set(main.hikka.clients + [self._pending_client]))
+        main.hook.clients = list(set(main.hook.clients + [self._pending_client]))
         self._pending_client = None
 
         self.clients_set.set()
@@ -547,7 +547,7 @@ class Web:
             except Exception:
                 pass
 
-        session = f"hikka_{utils.rand(16)}"
+        session = f"hook_{utils.rand(16)}"
 
         if not ops:
             # If no auth message was sent, just leave it empty
@@ -555,7 +555,7 @@ class Web:
             # inline bot or did not authorize any sessions
             return web.Response(body=session)
 
-        if not await main.hikka.wait_for_web_auth(token):
+        if not await main.hook.wait_for_web_auth(token):
             for op in ops:
                 await op()
             return web.Response(body="TIMEOUT")
