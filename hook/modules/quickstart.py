@@ -29,14 +29,14 @@ class Quickstart(loader.Module):
             [
                 {
                     "text": self.strings("btn_support"),
-                    "url": "https://t.me/hikka_talks",
+                    "url": "https://t.me/hookdev_arch_chat",
                 }
             ],
         ] + utils.chunks(
             [
                 {
                     "text": self.strings.get("language", lang),
-                    "data": f"hikka/lang/{lang}",
+                    "data": f"hook/lang/{lang}",
                 }
                 for lang in translations.SUPPORTED_LANGUAGES
             ],
@@ -70,7 +70,7 @@ class Quickstart(loader.Module):
 
     @loader.callback_handler()
     async def lang(self, call: BotInlineCall):
-        if not call.data.startswith("hikka/lang/"):
+        if not call.data.startswith("hook/lang/"):
             return
 
         lang = call.data.split("/")[2]
