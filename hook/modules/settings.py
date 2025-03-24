@@ -42,7 +42,7 @@ class CoreMod(loader.Module):
         return f"{str(chatid)}.{module}" if module else chatid
 
     @loader.command()
-    async def hikkacmd(self, message: Message):
+    async def hookcmd(self, message: Message):
         await utils.answer_file(
             message,
             "https://i.yapx.ru/Yk70A.png",

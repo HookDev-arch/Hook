@@ -37,7 +37,7 @@ ALL_INVOKES = [
 class HikkaSettingsMod(loader.Module):
     """Advanced settings for Hook Userbot"""
 
-    strings = {"name": "HikkaSettings"}
+    strings = {"name": "HookSettings"}
 
     def get_watchers(self) -> tuple:
         return [
@@ -151,7 +151,7 @@ class HikkaSettingsMod(loader.Module):
         )
 
     @loader.command()
-    async def uninstall_hikka(self, message: Message):
+    async def uninstall_hook(self, message: Message):
         await self.inline.form(
             self.strings("deauth_confirm"),
             message,

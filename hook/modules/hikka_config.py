@@ -24,7 +24,7 @@ NUM_ROWS = 5
 class HikkaConfigMod(loader.Module):
     """Interactive configurator for Hook Userbot"""
 
-    strings = {"name": "HikkaConfig"}
+    strings = {"name": "HookConfig"}
 
     @staticmethod
     def prep_value(value: typing.Any) -> typing.Any:

@@ -11,7 +11,7 @@ from ..inline.types import InlineQuery
 class HikkaInfoMod(loader.Module):
     """Show userbot info"""
 
-    strings = {"name": "HikkaInfo"}
+    strings = {"name": "HookInfo"}
 
     def __init__(self):
         self.config = loader.ModuleConfig(
@@ -176,7 +176,7 @@ class HikkaInfoMod(loader.Module):
             )
 
     @loader.command()
-    async def hikkainfo(self, message: Message):
+    async def hookinfo(self, message: Message):
         await utils.answer(message, self.strings("desc"))
 
     @loader.command()
