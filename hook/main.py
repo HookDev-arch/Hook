@@ -757,7 +757,7 @@ class Hook:
 
             await client.hikka_inline.bot.send_animation(
                 logging.getLogger().handlers[0].get_logid_by_client(client.tg_id),
-                "https://i.yapx.ru/Yk70A.png",
+                "https://github.com/hikariatama/assets/raw/master/hikka_banner.mp4",
                 caption=(
                     "🌘 <b>Hook {} started!</b>\n\n🌳 <b>GitHub commit SHA: <a"
                     ' href="https://github.com/HookDev-arch/Hook/commit/{}">{}</a></b>\n✊'
@@ -778,6 +778,7 @@ class Hook:
             )
         except Exception:
             logging.exception("Badge error")
+
 
     async def _add_dispatcher(
         self,
