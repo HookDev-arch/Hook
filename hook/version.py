@@ -1,6 +1,6 @@
 """Represents current userbot version"""
 
-__version__ = (0, 7, 0)
+__version__ = (0, 7, 5)
 
 import os
 
