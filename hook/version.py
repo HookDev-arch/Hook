@@ -1,4 +1,4 @@
-"""Represents current userbot version"""
+"""Represents current Hook userbot version"""
 
 __version__ = (0, 8, 0)
 
