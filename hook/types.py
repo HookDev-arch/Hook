@@ -1,5 +1,3 @@
-
-
 import ast
 import asyncio
 import contextlib
@@ -40,6 +38,8 @@ from .inline.types import (
     InlineUnit,
 )
 from .pointers import PointerDict, PointerList
+from .tl_cache import CustomTelegramClient  # Добавлен импорт для явности
+from .database import Database  # Добавлен импорт для явности
 
 __all__ = [
     "JSONSerializable",
@@ -63,7 +63,6 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
-
 
 JSONSerializable = typing.Union[str, int, float, bool, list, dict, None]
 HikkaReplyMarkup = typing.Union[typing.List[typing.List[dict]], typing.List[dict], dict]
@@ -100,6 +99,28 @@ class Module:
 
     """There is no help for this module"""
 
+    def __init__(
+        self,
+        client: typing.Optional[CustomTelegramClient] = None,
+        db: typing.Optional[Database] = None,
+        tg_id: typing.Optional[int] = None,
+    ):
+        """
+        Initialize the module with client, database, and Telegram ID.
+        :param client: The Telegram client instance
+        :param db: The database instance
+        :param tg_id: The Telegram ID of the client
+        """
+        self.client = client
+        self._client = client
+        self.db = db
+        self._db = db
+        self.tg_id = tg_id
+        self._tg_id = tg_id
+        self.allmodules = None  # Будет установлено позже через internal_init
+        self.inline = None  # Будет установлено позже
+        self.logchat = None  # Добавляем атрибут для лог-чата
+
     def config_complete(self):
         """Called when module.config is populated"""
 
@@ -108,16 +129,17 @@ class Module:
 
     def internal_init(self):
         """Called after the class is initialized in order to pass the client and db. Do not call it yourself"""
-        self.db = self.allmodules.db
-        self._db = self.allmodules.db
-        self.client = self.allmodules.client
-        self._client = self.allmodules.client
-        self.lookup = self.allmodules.lookup
-        self.get_prefix = self.allmodules.get_prefix
-        self.inline = self.allmodules.inline
-        self.allclients = self.allmodules.allclients
-        self.tg_id = self._client.tg_id
-        self._tg_id = self._client.tg_id
+        if self.allmodules:
+            self.db = self.allmodules.db
+            self._db = self.allmodules.db
+            self.client = self.allmodules.client
+            self._client = self.allmodules.client
+            self.lookup = self.allmodules.lookup
+            self.get_prefix = self.allmodules.get_prefix
+            self.inline = self.allmodules.inline
+            self.allclients = self.allmodules.allclients
+            self.tg_id = self._client.tg_id
+            self._tg_id = self._client.tg_id
 
     async def on_unload(self):
         """Called after unloading / reloading module"""
@@ -125,12 +147,10 @@ class Module:
     async def on_dlmod(self):
         """
         Called after the module is first time loaded with .dlmod or .loadmod
-
         Possible use-cases:
         - Send reaction to author's channel message
         - Create asset folder
         - ...
-
         ⚠️ Note, that any error there will not interrupt module load, and will just
         send a message to logs with verbosity INFO and exception traceback
         """
@@ -616,7 +636,7 @@ class Module:
                 _raise(RuntimeError("Library init() failed"))
 
         if hasattr(lib_obj, "config"):
-            if not isinstance(lib_obj.config, LibraryConfig):
+            if not isinstance(lib_obj, LibraryConfig):
                 _raise(
                     RuntimeError("Library config must be a `LibraryConfig` instance")
                 )
