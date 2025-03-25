@@ -14,6 +14,7 @@ import sqlite3
 import typing
 from getpass import getpass
 from pathlib import Path
+from .types import Module
 
 import hikkatl
 from hikkatl import events
@@ -855,6 +856,8 @@ class Hook:
 
         db = database.Database(client)
         client.hikka_db = db
+        log_handler = logging.getLogger().handlers[0]
+        log_handler.install_tg_log(Module(client=client, db=db, tg_id=client.tg_id))
         await db.init()
 
         logging.debug("Got DB")
