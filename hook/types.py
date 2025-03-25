@@ -105,19 +105,6 @@ class Module:
     async def client_ready(self):
         """Called after client is ready (after config_loaded)"""
 
-    def internal_init(self):
-        """Called after the class is initialized in order to pass the client and db. Do not call it yourself"""
-        self.db = self.allmodules.db
-        self._db = self.allmodules.db
-        self.client = self.allmodules.client
-        self._client = self.allmodules.client
-        self.lookup = self.allmodules.lookup
-        self.get_prefix = self.allmodules.get_prefix
-        self.inline = self.allmodules.inline
-        self.allclients = self.allmodules.allclients
-        self.tg_id = self._client.tg_id
-        self._tg_id = self._client.tg_id
-
     async def on_unload(self):
         """Called after unloading / reloading module"""
 
@@ -154,6 +141,25 @@ class Module:
         self.allmodules = None  # Будет установлено позже через internal_init
         self.inline = None  # Будет установлено позже
         self.logchat = None  # Добавляем атрибут для лог-чата
+        
+    def internal_init(self):
+        """Called after the class is initialized in order to pass the client and db. Do not call it yourself"""
+        if self.allmodules:
+            self.db = self.allmodules.db
+            self._db = self.allmodules.db
+            self.client = self.allmodules.client
+            self._client = self.allmodules.client
+            self.lookup = self.allmodules.lookup
+            self.get_prefix = self.allmodules.get_prefix
+            self.inline = self.allmodules.inline
+            self.allclients = self.allmodules.allclients
+            self.tg_id = self._client.tg_id
+            self._tg_id = self._client.tg_id
+        else:
+            # Если allmodules не передан, используем сохранённые значения
+            self.client = self._client
+            self.db = self._db
+            self.tg_id = self._tg_id
 
     async def invoke(
         self,
