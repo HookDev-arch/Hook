@@ -1,6 +1,6 @@
-"""Represents current Hook userbot version"""
+"""Represents current userbot version"""
 
-__version__ = (0, 8, 0)
+__version__ = (0, 7, 6)
 
 import os
 

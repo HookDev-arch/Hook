@@ -19,14 +19,6 @@ PACKS = Path(__file__).parent / "langpacks"
 SUPPORTED_LANGUAGES = {
     "en": "🇬🇧 English",
     "ru": "🇷🇺 Русский",
-    "fr": "🇫🇷 Français",
-    "it": "🇮🇹 Italiano",
-    "de": "🇩🇪 Deutsch",
-    "tr": "🇹🇷 Türkçe",
-    "uz": "🇺🇿 O'zbekcha",
-    "es": "🇪🇸 Español",
-    "kk": "🇰🇿 Қазақша",
-    "tt": "🥟 Татарча",
 }
 
 
