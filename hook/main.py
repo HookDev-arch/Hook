@@ -328,6 +328,7 @@ class Hook:
         self.loop = asyncio.get_event_loop()
 
         self.clients = SuperList()
+        self._session_lock = asyncio.Lock()
         self.ready = asyncio.Event()
         self._read_sessions()
         self._get_api_token()
