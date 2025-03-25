@@ -505,7 +505,7 @@ class Hook:
                     await asyncio.sleep(delay)
                 else:
                     logging.error(f"Failed to save session for client {telegram_id} after {retries} attempts: {str(e)}")
-                    raise  VERIFY ВОТ ЭТУ СТРОКУ # Пробрасываем ошибку, если все попытки исчерпаны
+                    raise
             except Exception as e:
                 logging.error(f"Unexpected error while saving session for client {telegram_id}: {str(e)}")
                 raise
