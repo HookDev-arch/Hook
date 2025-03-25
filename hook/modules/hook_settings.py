@@ -34,7 +34,7 @@ ALL_INVOKES = [
 
 
 @loader.tds
-class HookSettingsMod(loader.Module):
+class HikkaSettingsMod(loader.Module):
     """Advanced settings for Hook Userbot"""
 
     strings = {"name": "HookSettings"}

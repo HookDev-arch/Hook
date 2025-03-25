@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @loader.tds
-class HookBackupMod(loader.Module):
+class HikkaBackupMod(loader.Module):
     """Handles database and modules backups"""
 
     strings = {"name": "HookBackup"}

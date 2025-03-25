@@ -29,7 +29,7 @@ from ..security import (
 
 
 @loader.tds
-class HookSecurityMod(loader.Module):
+class HikkaSecurityMod(loader.Module):
     """Control security settings"""
 
     strings = {"name": "HookSecurity"}

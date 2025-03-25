@@ -21,7 +21,7 @@ NUM_ROWS = 5
 
 
 @loader.tds
-class HookConfigMod(loader.Module):
+class HikkaConfigMod(loader.Module):
     """Interactive configurator for Hook Userbot"""
 
     strings = {"name": "HookConfig"}

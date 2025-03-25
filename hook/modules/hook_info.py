@@ -8,7 +8,7 @@ from ..inline.types import InlineQuery
 
 
 @loader.tds
-class HookInfoMod(loader.Module):
+class HikkaInfoMod(loader.Module):
     """Show userbot info"""
 
     strings = {"name": "HookInfo"}
