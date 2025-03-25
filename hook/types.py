@@ -27,7 +27,7 @@ from hikkatl.tl.types import (
     UserFull,
 )
 
-from . import version
+from . import database, version
 from ._reference_finder import replace_all_refs
 from .inline.types import (
     BotInlineCall,
@@ -121,9 +121,10 @@ class Module:
         send a message to logs with verbosity INFO and exception traceback
         """
         
-    def __init__(
+def __init__(
         self,
-        client=None,  # Без аннотации CustomTelegramClient
+        client=None,
+        db: database.Database,
         tg_id: typing.Optional[int] = None,
     ):
         """
@@ -132,16 +133,16 @@ class Module:
         :param db: The database instance
         :param tg_id: The Telegram ID of the client
         """
-        self.client = self.allmodules.client
-        self._client = self.allmodules.client
-        self.db = self.allmodules.db
-        self._db = self.allmodules.db
-        self.tg_id = self._client.tg_id
-        self._tg_id = self._client.tg_id
+        # Сохраняем аргументы, но не обращаемся к allmodules
+        self._client = client
+        self._db = db
+        self._tg_id = tg_id
         self.allmodules = None  # Будет установлено позже через internal_init
         self.inline = None  # Будет установлено позже
         self.logchat = None  # Добавляем атрибут для лог-чата
-        
+        # Убираем прямые присваивания self.client, self.db, self.tg_id,
+        # они будут установлены в internal_init
+
     def internal_init(self):
         """Called after the class is initialized in order to pass the client and db. Do not call it yourself"""
         if self.allmodules:
