@@ -15,7 +15,6 @@ import time
 import typing
 from dataclasses import dataclass, field
 from importlib.abc import SourceLoader
-from .database import Database
 
 import requests
 from hikkatl.hints import EntityLike
@@ -138,7 +137,6 @@ class Module:
     def __init__(
         self,
         client=None,  # Без аннотации CustomTelegramClient
-        db: typing.Optional[Database] = None,
         tg_id: typing.Optional[int] = None,
     ):
         """
@@ -147,12 +145,12 @@ class Module:
         :param db: The database instance
         :param tg_id: The Telegram ID of the client
         """
-        self.client = client
-        self._client = client
-        self.db = db
-        self._db = db
-        self.tg_id = tg_id
-        self._tg_id = tg_id
+        self.client = self.allmodules.client
+        self._client = self.allmodules.client
+        self.db = self.allmodules.db
+        self._db = self.allmodules.db
+        self.tg_id = self._client.tg_id
+        self._tg_id = self._client.tg_id
         self.allmodules = None  # Будет установлено позже через internal_init
         self.inline = None  # Будет установлено позже
         self.logchat = None  # Добавляем атрибут для лог-чата
