@@ -1,5 +1,6 @@
 """Main script, where all the fun starts"""
 
+
 import argparse
 import asyncio
 import collections
@@ -14,7 +15,6 @@ import sqlite3
 import typing
 from getpass import getpass
 from pathlib import Path
-from .types import Module
 
 import hikkatl
 from hikkatl import events
@@ -329,7 +329,6 @@ class Hook:
         self.loop = asyncio.get_event_loop()
 
         self.clients = SuperList()
-        self._session_lock = asyncio.Lock()
         self.ready = asyncio.Event()
         self._read_sessions()
         self._get_api_token()
@@ -447,72 +446,39 @@ class Hook:
                 importlib.invalidate_caches()
                 self._get_api_token()
 
-    async def save_client_session(self, client: CustomTelegramClient, retries=3, delay=1):
-        """
-        Сохраняет сессию клиента в SQLite с защитой от конфликтов базы данных.
-
-        :param client: Экземпляр CustomTelegramClient
-        :param retries: Количество повторных попыток при блокировке базы (по умолчанию 3)
-        :param delay: Задержка между попытками в секундах (по умолчанию 1)
-        """
-        # Определяем Telegram ID клиента
+    async def save_client_session(self, client: CustomTelegramClient):
         if hasattr(client, "tg_id"):
             telegram_id = client.tg_id
         else:
             if not (me := await client.get_me()):
                 raise RuntimeError("Attempted to save non-inited session")
+
             telegram_id = me.id
             client._tg_id = telegram_id
             client.tg_id = telegram_id
             client.hikka_me = me
 
-        # Создаём новую сессию SQLite
         session = SQLiteSession(
             os.path.join(
                 BASE_DIR,
                 f"hook-{telegram_id}",
             )
-            # Примечание: Параметр timeout не поддерживается в этой версии hikkatl.
-            # Чтобы увеличить таймаут, можно вручную изменить sqlite3.connect в
-            # hikkatl/sessions/sqlite.py, добавив timeout=15
         )
 
-        # Выполняем сохранение с повторными попытками при блокировке
-        for attempt in range(retries):
-            try:
-                async with self._session_lock:  # Защищаем доступ к базе
-                    logging.debug(f"Saving session for client {telegram_id} (attempt {attempt + 1}/{retries})")
+        session.set_dc(
+            client.session.dc_id,
+            client.session.server_address,
+            client.session.port,
+        )
 
-                    # Устанавливаем параметры DC (Data Center)
-                    session.set_dc(
-                        client.session.dc_id,
-                        client.session.server_address,
-                        client.session.port,
-                    )
-                    session.auth_key = client.session.auth_key
+        session.auth_key = client.session.auth_key
 
-                    # Сохраняем сессию
-                    session.save()
-
-                    # Привязываем сессию к клиенту
-                    client.session = session
-
-                    # Инициализируем базу данных клиента
-                    client.hikka_db = database.Database(client)
-                    await client.hikka_db.init()
-
-                    logging.debug(f"Session for client {telegram_id} saved successfully")
-                break  # Успешно сохранили, выходим из цикла
-            except sqlite3.OperationalError as e:
-                if "database is locked" in str(e) and attempt < retries - 1:
-                    logging.warning(f"Database locked for client {telegram_id}, retrying in {delay}s... ({attempt + 1}/{retries})")
-                    await asyncio.sleep(delay)
-                else:
-                    logging.error(f"Failed to save session for client {telegram_id} after {retries} attempts: {str(e)}")
-                    raise  # Пробрасываем ошибку, если все попытки исчерпаны
-            except Exception as e:
-                logging.error(f"Unexpected error while saving session for client {telegram_id}: {str(e)}")
-                raise
+        session.save()
+        client.session = session
+        # Set db attribute to this client in order to save
+        # custom bot nickname from web
+        client.hikka_db = database.Database(client)
+        await client.hikka_db.init()
 
     async def _web_banner(self):
         """Shows web banner"""
@@ -856,8 +822,6 @@ class Hook:
 
         db = database.Database(client)
         client.hikka_db = db
-        log_handler = logging.getLogger().handlers[0]
-        log_handler.install_tg_log(Module(client=client, db=db, tg_id=client.tg_id))
         await db.init()
 
         logging.debug("Got DB")
