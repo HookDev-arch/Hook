@@ -1,5 +1,6 @@
 """Main logging part"""
 
+
 import asyncio
 import inspect
 import io
@@ -36,6 +37,7 @@ def getlines(filename: str, module_globals=None) -> str:
     source code of Hook and Dragon modules properly. This is needed for
     interactive line debugger in werkzeug web debugger.
     """
+
     try:
         if filename.startswith("<") and filename.endswith(">"):
             module = filename[1:-1].split(maxsplit=1)[-1]
@@ -124,6 +126,7 @@ class HikkaException:
 
         def format_line(line: str) -> str:
             filename_, lineno_, name_ = line_regex.search(line).groups()
+
             return (
                 f"👉 <code>{utils.escape_html(filename_)}:{lineno_}</code> <b>in</b>"
                 f" <code>{utils.escape_html(name_)}</code>"
@@ -324,46 +327,8 @@ class TelegramLogsHandler(logging.Handler):
             show_alert=True,
         )
 
-    async def create_logchat(self, client: CustomTelegramClient) -> int:
-        """Создаёт лог-чат, если он не существует, и возвращает его ID"""
-        try:
-            # Проверяем, есть ли уже лог-чат в базе данных
-            logchat = client.hikka_db.get("core", "logchat", None)
-            if logchat:
-                # Проверяем, существует ли чат
-                try:
-                    await client.get_entity(logchat)
-                    return logchat
-                except Exception:
-                    logging.debug(f"Log chat {logchat} is invalid, creating a new one")
-
-            # Создаём новый лог-чат
-            chat = await client.create_supergroup("Hook Logs", "Лог-чат для Hook Userbot")
-            logchat_id = chat.id
-            client.hikka_db.set("core", "logchat", logchat_id)  # Сохраняем в базе
-            logging.info(f"Created new log chat with ID {logchat_id} for client {client.tg_id}")
-            return logchat_id
-        except Exception as e:
-            logging.error(f"Failed to create log chat for client {client.tg_id}: {str(e)}")
-            return None
-
     def get_logid_by_client(self, client_id: int) -> int:
-        """Получает или создаёт ID лог-чата для клиента"""
-        if client_id not in self._mods:
-            logging.warning(f"Client {client_id} not found in mods, cannot get log chat")
-            return None
-
-        mod = self._mods[client_id]
-        if not hasattr(mod, "logchat") or not mod.logchat:
-            # Если лог-чата нет, создаём его
-            logchat = asyncio.run(self.create_logchat(mod.client))
-            if logchat:
-                mod.logchat = logchat
-            else:
-                logging.error(f"Failed to initialize log chat for client {client_id}")
-                return None
-
-        return mod.logchat
+        return self._mods[client_id].logchat
 
     async def sender(self):
         async with self._send_lock:
