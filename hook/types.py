@@ -38,7 +38,7 @@ from .inline.types import (
     InlineUnit,
 )
 from .pointers import PointerDict, PointerList
-from .database import Database  # Оставляем импорт Database, он не вызывает проблем
+from .database import Database
 
 __all__ = [
     "JSONSerializable",
@@ -100,7 +100,7 @@ class Module:
 
     def __init__(
         self,
-        client: typing.Optional["CustomTelegramClient"] = None,  # Строковая аннотация
+        client=None,  # Убираем аннотацию CustomTelegramClient
         db: typing.Optional[Database] = None,
         tg_id: typing.Optional[int] = None,
     ):
