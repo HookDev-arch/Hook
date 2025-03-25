@@ -469,8 +469,10 @@ class Hook:
             os.path.join(
                 BASE_DIR,
                 f"hook-{telegram_id}",
-            ),
-            timeout=15  # Увеличиваем таймаут SQLite до 15 секунд
+            )
+            # Примечание: Параметр timeout не поддерживается в этой версии hikkatl.
+            # Чтобы увеличить таймаут, можно вручную изменить sqlite3.connect в
+            # hikkatl/sessions/sqlite.py, добавив timeout=15
         )
 
         # Выполняем сохранение с повторными попытками при блокировке
@@ -505,7 +507,7 @@ class Hook:
                     await asyncio.sleep(delay)
                 else:
                     logging.error(f"Failed to save session for client {telegram_id} after {retries} attempts: {str(e)}")
-                    raise
+                    raise  # Пробрасываем ошибку, если все попытки исчерпаны
             except Exception as e:
                 logging.error(f"Unexpected error while saving session for client {telegram_id}: {str(e)}")
                 raise
