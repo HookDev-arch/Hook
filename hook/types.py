@@ -15,6 +15,7 @@ import time
 import typing
 from dataclasses import dataclass, field
 from importlib.abc import SourceLoader
+from .database import Database
 
 import requests
 from hikkatl.hints import EntityLike
