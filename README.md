@@ -67,7 +67,8 @@ While the documentation is under construction, you can contact the [official sup
 
 ## Support
 If you have any questions or problems, please join our community.:
-- Telegram: [t.me/hook_support](https://t.me/hookdev_arch_chat).
+- Telegram: [t.me/hookdev_arch_chat](https://t.me/hookdev_arch_chat)
+- Telegram channel: [t.me/hookdev_arch](https://t.me/hookdev_arch)
 
 ---
 
