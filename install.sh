@@ -34,7 +34,7 @@ fi
 clear
 clear
 
-printf "\n\n\e[3;34;40m Start Hook Installing...\e[0m\n\n"
+printf "\n\n\e[3;34;40m Start Hook Installing (Stable GitHub Version >= 1.0.0)...\e[0m\n\n"
 
 ##############################################################################
 
