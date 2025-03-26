@@ -757,7 +757,7 @@ class Hook:
 
             await client.hikka_inline.bot.send_animation(
                 logging.getLogger().handlers[0].get_logid_by_client(client.tg_id),
-                "https://github.com/hikariatama/assets/raw/master/hikka_banner.mp4",
+                "https://i.yapx.ru/Yk70A.png",
                 caption=(
                     "🌘 <b>Hook {} started!</b>\n\n🌳 <b>GitHub commit SHA: <a"
                     ' href="https://github.com/HookDev-arch/Hook/commit/{}">{}</a></b>\n✊'
