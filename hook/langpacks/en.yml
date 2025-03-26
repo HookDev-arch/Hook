@@ -377,7 +377,7 @@ update_notifier:
 updater:
     name: "Updater"
     source: "<emoji document_id=5456255401194429832>📖</emoji> <b>Read the source code from</b> <a href='{}'>here</a>"
-    restarting_caption: "<emoji document_id=5328274090262275771>🕗</emoji> <b>Your {} is restarting...</b>"
+    restarting_caption: "<emoji document_id=5328274090262275771>🕗</emoji> <b>Your Hook is restarting...</b>"
     downloading: "<emoji document_id=5328274090262275771>🕗</emoji> <b>Downloading updates...</b>"
     installing: "<emoji document_id=5328274090262275771>🕗</emoji> <b>Installing updates...</b>"
     success: "<emoji document_id=5326015457155620929>⏱</emoji> <b>Restart successful! {}</b>\n<i>But still loading modules...</i>\n<i>Restart took {}s</i>"
@@ -389,7 +389,7 @@ updater:
     update_confirm: "❓ <b>Are you sure you want to update?\n\n<a href=\"https://github.com/HookDev-arch/Hook/commit/{}\">{}</a> ⤑ <a href=\"https://github.com/HookDev-arch/Hook/commit/{}\">{}</a></b>"
     no_update: "🚸 <b>You are on the latest version, pull updates anyway?</b>"
     cancel: "🚫 Cancel"
-    lavhost_update: "<emoji document_id=5469986291380657759>✌️</emoji> <b>Your {} is updating...</b>"
+    lavhost_update: "<emoji document_id=5469986291380657759>✌️</emoji> <b>Your Hook is updating...</b>"
     full_success: "<emoji document_id=5301096082674032190>👍</emoji> <b>Userbot is fully loaded! {}</b>\n<i>Full restart took {}s</i>"
     secure_boot_complete: "<emoji document_id=5472308992514464048>🔐</emoji> <b>Secure boot completed! {}</b>\n<i>Restart took {}s</i>"
     _cmd_doc_restart: "Restarts the userbot"
