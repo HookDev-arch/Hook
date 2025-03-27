@@ -8,6 +8,8 @@ import os
 import re
 import string
 import time
+import sys
+from pathlib import Path
 
 import aiohttp_jinja2
 import requests
@@ -41,7 +43,6 @@ DATA_DIR = (
 
 logger = logging.getLogger(__name__)
 
-
 class Web:
     def __init__(self, **kwargs):
         self.sign_in_clients = {}
@@ -55,7 +56,9 @@ class Web:
         self.data_root = kwargs.pop("data_root")
         self.connection = kwargs.pop("connection")
         self.proxy = kwargs.pop("proxy")
+        self.loader = kwargs.pop("loader")  # Добавляем loader для управления модулями
 
+        # Добавляем новые маршруты
         self.app.router.add_get("/", self.root)
         self.app.router.add_put("/set_api", self.set_tg_api)
         self.app.router.add_post("/send_tg_code", self.send_tg_code)
@@ -68,6 +71,11 @@ class Web:
         self.app.router.add_post("/get_qr_url", self.get_qr_url)
         self.app.router.add_post("/qr_2fa", self.qr_2fa)
         self.app.router.add_post("/can_add", self.can_add)
+        self.app.router.add_get("/modules", self.modules_page)  # Страница управления модулями
+        self.app.router.add_post("/upload_module", self.upload_module)  # Загрузка модуля
+        self.app.router.add_post("/delete_module", self.delete_module)  # Удаление модуля
+        self.app.router.add_post("/restart", self.restart)  # Перезапуск юзербота
+
         self.api_set = asyncio.Event()
         self.clients_set = asyncio.Event()
 
@@ -566,3 +574,214 @@ class Web:
         self._sessions += [session]
 
         return web.Response(body=session)
+
+    # Новые методы для управления модулями и перезапуском
+
+    async def modules_page(self, request: web.Request) -> web.Response:
+        """Отображает страницу управления модулями"""
+        if not self._check_session(request):
+            return web.Response(text="Unauthorized", status=401)
+
+        # Получаем список модулей из loader
+        modules = self.loader.modules
+        html = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Hook - Управление модулями</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+                    color: #fff;
+                    padding: 20px;
+                    margin: 0;
+                }
+                h1 {
+                    text-align: center;
+                    margin-bottom: 20px;
+                }
+                table {
+                    width: 100%;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    border-collapse: collapse;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    overflow: hidden;
+                }
+                th, td {
+                    padding: 15px;
+                    text-align: left;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                th {
+                    background: rgba(255, 255, 255, 0.2);
+                }
+                button {
+                    padding: 8px 15px;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    transition: background 0.3s ease;
+                }
+                .delete-btn {
+                    background: #ef4444;
+                    color: #fff;
+                }
+                .delete-btn:hover {
+                    background: #dc2626;
+                }
+                .restart-btn {
+                    background: #10b981;
+                    color: #fff;
+                    margin: 20px auto;
+                    display: block;
+                }
+                .restart-btn:hover {
+                    background: #059669;
+                }
+                .upload-form {
+                    text-align: center;
+                    margin: 20px 0;
+                }
+                input[type="file"] {
+                    padding: 10px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 5px;
+                    color: #fff;
+                }
+                input[type="submit"] {
+                    padding: 10px 20px;
+                    background: #3b82f6;
+                    color: #fff;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                input[type="submit"]:hover {
+                    background: #1e3a8a;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Управление модулями Hook 🚀</h1>
+
+            <div class="upload-form">
+                <form action="/upload_module" method="post" enctype="multipart/form-data">
+                    <input type="file" name="module_file" accept=".py" required>
+                    <input type="submit" value="Загрузить модуль">
+                </form>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Модуль</th>
+                    <th>Действия</th>
+                </tr>
+        """
+
+        # Добавляем строки для каждого модуля
+        for mod in modules:
+            mod_name = mod.strings.get("name", "Unknown")
+            html += f"""
+                <tr>
+                    <td>{mod_name}</td>
+                    <td>
+                        <form action="/delete_module" method="post" style="display:inline;">
+                            <input type="hidden" name="module_name" value="{mod_name}">
+                            <button type="submit" class="delete-btn">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            """
+
+        html += """
+            </table>
+
+            <form action="/restart" method="post">
+                <button type="submit" class="restart-btn">Перезапустить юзербота</button>
+            </form>
+        </body>
+        </html>
+        """
+        return web.Response(text=html, content_type="text/html")
+
+    async def upload_module(self, request: web.Request) -> web.Response:
+        """Обрабатывает загрузку нового модуля"""
+        if not self._check_session(request):
+            return web.Response(text="Unauthorized", status=401)
+
+        reader = await request.multipart()
+        field = await reader.next()
+        if not field or field.name != "module_file":
+            return web.Response(text="No file uploaded", status=400)
+
+        # Сохраняем файл в папку modules
+        filename = field.filename
+        if not filename.endswith(".py"):
+            return web.Response(text="Only .py files are allowed", status=400)
+
+        module_path = Path("hook") / "modules" / filename
+        with open(module_path, "wb") as f:
+            while True:
+                chunk = await field.read_chunk()
+                if not chunk:
+                    break
+                f.write(chunk)
+
+        # Перезагружаем модули
+        try:
+            await self.loader.load_module(str(module_path))
+            return web.Response(
+                text=f"Module {filename} uploaded and loaded successfully! <a href='/modules'>Back to Modules</a>",
+                content_type="text/html"
+            )
+        except Exception as e:
+            return web.Response(
+                text=f"Failed to load module {filename}: {str(e)} <a href='/modules'>Back to Modules</a>",
+                status=500,
+                content_type="text/html"
+            )
+
+    async def delete_module(self, request: web.Request) -> web.Response:
+        """Обрабатывает удаление модуля"""
+        if not self._check_session(request):
+            return web.Response(text="Unauthorized", status=401)
+
+        data = await request.post()
+        module_name = data.get("module_name")
+        if not module_name:
+            return web.Response(text="Module name not provided", status=400)
+
+        # Удаляем модуль
+        try:
+            await self.loader.unload_module(module_name)
+            module_file = Path("hook") / "modules" / f"{module_name.lower()}.py"
+            if module_file.exists():
+                module_file.unlink()
+            return web.Response(
+                text=f"Module {module_name} deleted successfully! <a href='/modules'>Back to Modules</a>",
+                content_type="text/html"
+            )
+        except Exception as e:
+            return web.Response(
+                text=f"Failed to delete module {module_name}: {str(e)} <a href='/modules'>Back to Modules</a>",
+                status=500,
+                content_type="text/html"
+            )
+
+    async def restart(self, request: web.Request) -> web.Response:
+        """Обрабатывает перезапуск юзербота"""
+        if not self._check_session(request):
+            return web.Response(text="Unauthorized", status=401)
+
+        # Перезапускаем юзербота
+        logging.info("Restarting Hook via web interface...")
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+        return web.Response(
+            text="Restart initiated! Please wait a few seconds and refresh the page.",
+            content_type="text/html"
+        )
