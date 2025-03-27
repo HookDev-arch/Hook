@@ -414,24 +414,6 @@ class Hook:
 
         self.api_token = api_token
 
-    def _init_web(self):
-        """Initialize web"""
-        if (
-            not web_available
-            or getattr(self.arguments, "disable_web", False)
-            or IS_TERMUX
-        ):
-            self.web = None
-            return
-
-        self.web = core.Web(
-            data_root=BASE_DIR,
-            api_token=self.api_token,
-            loader=loader.Modules,
-            proxy=self.proxy,
-            connection=self.conn,
-        )
-
     async def _get_token(self):
         """Reads or waits for user to enter API credentials"""
         while self.api_token is None:
@@ -855,6 +837,24 @@ class Hook:
             await self._badge(client)
 
         await client.run_until_disconnected()
+        
+    def _init_web(self):
+        """Initialize web"""
+        if (
+            not web_available
+            or getattr(self.arguments, "disable_web", False)
+            or IS_TERMUX
+        ):
+            self.web = None
+            return
+
+        self.web = core.Web(
+            data_root=BASE_DIR,
+            api_token=self.api_token,
+            loader=modules,
+            proxy=self.proxy,
+            connection=self.conn,
+        )
 
     async def _main(self):
         """Main entrypoint"""
