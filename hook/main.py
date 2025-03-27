@@ -427,7 +427,7 @@ class Hook:
         self.web = core.Web(
             data_root=BASE_DIR,
             api_token=self.api_token,
-            loader=loader.Modules
+            loader=loader.Modules,
             proxy=self.proxy,
             connection=self.conn,
         )
