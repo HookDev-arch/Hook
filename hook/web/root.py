@@ -579,8 +579,6 @@ class Web:
 
     async def modules_page(self, request: web.Request) -> web.Response:
         """Отображает страницу управления модулями"""
-        if not self._check_session(request):
-            return web.Response(text="Unauthorized", status=401)
 
         # Получаем список модулей из loader
         modules = self.loader.modules
@@ -711,8 +709,6 @@ class Web:
 
     async def upload_module(self, request: web.Request) -> web.Response:
         """Обрабатывает загрузку нового модуля"""
-        if not self._check_session(request):
-            return web.Response(text="Unauthorized", status=401)
 
         reader = await request.multipart()
         field = await reader.next()
@@ -748,8 +744,6 @@ class Web:
 
     async def delete_module(self, request: web.Request) -> web.Response:
         """Обрабатывает удаление модуля"""
-        if not self._check_session(request):
-            return web.Response(text="Unauthorized", status=401)
 
         data = await request.post()
         module_name = data.get("module_name")
@@ -775,8 +769,6 @@ class Web:
 
     async def restart(self, request: web.Request) -> web.Response:
         """Обрабатывает перезапуск юзербота"""
-        if not self._check_session(request):
-            return web.Response(text="Unauthorized", status=401)
 
         # Перезапускаем юзербота
         logging.info("Restarting Hook via web interface...")
