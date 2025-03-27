@@ -110,14 +110,11 @@ pm = security.pm
 unrestricted = security.unrestricted
 inline_everyone = security.inline_everyone
 
-
 async def stop_placeholder() -> bool:
     return True
 
-
 class Placeholder:
     """Placeholder"""
-
 
 VALID_PIP_PACKAGES = re.compile(
     r"^\s*# ?requires:(?: ?)((?:{url} )*(?:{url}))\s*$".format(
@@ -127,7 +124,6 @@ VALID_PIP_PACKAGES = re.compile(
 )
 
 USER_INSTALL = "PIP_TARGET" not in os.environ and "VIRTUAL_ENV" not in os.environ
-
 
 class InfiniteLoop:
     _task = None
@@ -218,7 +214,6 @@ class InfiniteLoop:
     def __del__(self):
         self.stop()
 
-
 def loop(
     interval: int = 5,
     autostart: typing.Optional[bool] = False,
@@ -235,12 +230,9 @@ def loop(
                        and will stop after key resets to `False`
     :attr status: Boolean, describing whether the loop is running
     """
-
     def wrapped(func):
         return InfiniteLoop(func, interval, autostart, wait_before, stop_clause)
-
     return wrapped
-
 
 MODULES_NAME = "modules"
 ru_keys = 'ёйцукенгшщзхъфывапролджэячсмитьбю.Ё"№;%:?ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭ/ЯЧСМИТЬБЮ,'
@@ -256,10 +248,8 @@ LOADED_MODULES_DIR = os.path.join(BASE_DIR, "loaded_modules")
 LOADED_MODULES_PATH = Path(LOADED_MODULES_DIR)
 LOADED_MODULES_PATH.mkdir(parents=True, exist_ok=True)
 
-
 def translatable_docstring(cls):
     """Decorator that makes triple-quote docstrings translatable"""
-
     @wraps(cls.config_complete)
     def config_complete(self, *args, **kwargs):
         def proccess_decorators(mark: str, obj: str):
@@ -311,15 +301,12 @@ def translatable_docstring(cls):
 
     return cls
 
-
 tds = translatable_docstring  # Shorter name for modules to use
-
 
 def ratelimit(func: Command) -> Command:
     """Decorator that causes ratelimiting for this command to be enforced more strictly"""
     func.ratelimit = True
     return func
-
 
 def tag(*tags, **kwarg_tags):
     """
@@ -374,11 +361,7 @@ def tag(*tags, **kwarg_tags):
     @loader.tag("no_commands", out=True)
     @loader.tag(only_messages=True)
     @loader.tag("only_messages", "only_pm", regex=r"^[.] ?hook$", from_id=0000000000)
-
-    💡 These tags can be used directly in `@loader.watcher`:
-    @loader.watcher("no_commands", out=True)
     """
-
     def inner(func: Command) -> Command:
         for _tag in tags:
             setattr(func, _tag, True)
@@ -390,12 +373,10 @@ def tag(*tags, **kwarg_tags):
 
     return inner
 
-
 def _mark_method(mark: str, *args, **kwargs) -> typing.Callable[..., Command]:
     """
     Mark method as a method of a class
     """
-
     def decorator(func: Command) -> Command:
         setattr(func, mark, True)
         for arg in args:
@@ -408,13 +389,11 @@ def _mark_method(mark: str, *args, **kwargs) -> typing.Callable[..., Command]:
 
     return decorator
 
-
 def command(*args, **kwargs):
     """
     Decorator that marks function as userbot command
     """
     return _mark_method("is_command", *args, **kwargs)
-
 
 def debug_method(*args, **kwargs):
     """
@@ -423,13 +402,11 @@ def debug_method(*args, **kwargs):
     """
     return _mark_method("is_debug_method", *args, **kwargs)
 
-
 def inline_handler(*args, **kwargs):
     """
     Decorator that marks function as inline handler
     """
     return _mark_method("is_inline_handler", *args, **kwargs)
-
 
 def watcher(*args, **kwargs):
     """
@@ -437,13 +414,11 @@ def watcher(*args, **kwargs):
     """
     return _mark_method("is_watcher", *args, **kwargs)
 
-
 def callback_handler(*args, **kwargs):
     """
     Decorator that marks function as callback handler
     """
     return _mark_method("is_callback_handler", *args, **kwargs)
-
 
 def raw_handler(*updates: TLObject):
     """
@@ -453,19 +428,15 @@ def raw_handler(*updates: TLObject):
     ⚠️ Do not try to simulate behavior of this decorator by yourself!
     ⚠️ This feature won't work, if you dynamically declare method with decorator!
     """
-
     def inner(func: Command) -> Command:
         func.is_raw_handler = True
         func.updates = updates
         func.id = uuid4().hex
         return func
-
     return inner
-
 
 class Modules:
     """Stores all registered modules"""
-
     def __init__(
         self,
         client: "CustomTelegramClient",  # type: ignore  # noqa: F821
@@ -494,6 +465,7 @@ class Modules:
         asyncio.ensure_future(self._junk_collector())
         self.inline = InlineManager(self.client, self._db, self)
         self.client.hikka_inline = self.inline
+        self.modules_dir = Path("hook") / "modules"  # Путь к папке с модулями
 
     async def _junk_collector(self):
         """
@@ -700,6 +672,90 @@ class Modules:
 
         return ret
 
+    async def load_module(self, module_path: str) -> None:
+        """Загружаем модуль из файла"""
+        try:
+            module_name = Path(module_path).stem
+            full_module_name = f"{__package__}.{MODULES_NAME}.{module_name}"
+            spec = importlib.util.spec_from_file_location(full_module_name, module_path)
+            if not spec:
+                raise ImportError(f"Cannot find spec for module {module_path}")
+
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[full_module_name] = module
+            spec.loader.exec_module(module)
+
+            # Регистрируем модуль
+            ret = next(
+                (
+                    value()
+                    for value in vars(module).values()
+                    if inspect.isclass(value) and issubclass(value, Module)
+                ),
+                None,
+            )
+
+            if ret is None:
+                ret = module.register(full_module_name)
+                if not isinstance(ret, Module):
+                    raise TypeError(f"Instance is not a Module, it is {type(ret)}")
+
+            await self.complete_registration(ret)
+            ret.__origin__ = "<file>"
+
+            # Регистрируем команды, наблюдатели и обработчики
+            self.register_commands(ret)
+            self.register_watchers(ret)
+            self.register_raw_handlers(ret)
+
+            logger.info(f"Module {module_name} loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load module {module_path}: {str(e)}")
+            raise
+
+    async def unload_module(self, module_name: str) -> typing.List[str]:
+        """Remove module and all stuff from it"""
+        worked = []
+
+        with contextlib.suppress(AttributeError):
+            _hikka_client_id_logging_tag = copy.copy(self.client.tg_id)  # noqa: F841
+
+        for module in self.modules.copy():
+            if module_name.lower() in (
+                module.name.lower(),
+                module.__class__.__name__.lower(),
+            ):
+                if not self._remove_core_protection and module.__origin__.startswith(
+                    "<core"
+                ):
+                    raise CoreUnloadError(module.__class__.__name__)
+
+                worked += [module.__class__.__name__]
+
+                name = module.__class__.__name__
+                path = os.path.join(
+                    LOADED_MODULES_DIR,
+                    f"{name}_{self.client.tg_id}.py",
+                )
+
+                if os.path.isfile(path):
+                    os.remove(path)
+                    logger.debug("Removed %s file at path %s", name, path)
+
+                logger.debug("Removing module %s for unload", module)
+                self.modules.remove(module)
+
+                await module.on_unload()
+
+                self.unregister_raw_handlers(module, "unload")
+                self.unregister_loops(module, "unload")
+                self.unregister_commands(module, "unload")
+                self.unregister_watchers(module, "unload")
+                self.unregister_inline_stuff(module, "unload")
+
+        logger.debug("Worked: %s", worked)
+        return worked
+
     def add_aliases(self, aliases: dict):
         """Saves aliases and applies them to <core>/<file> modules"""
         self.aliases.update(aliases)
@@ -721,7 +777,6 @@ class Modules:
     @property
     def _remove_core_protection(self) -> bool:
         from . import main
-
         return self._db.get(main.__name__, "remove_core_protection", False)
 
     def register_commands(self, instance: Module):
@@ -956,7 +1011,6 @@ class Modules:
 
     def dispatch(self, _command: str) -> typing.Tuple[str, typing.Optional[str]]:
         """Dispatch command to appropriate module"""
-
         return next(
             (
                 (cmd, self.commands[cmd.lower()])
@@ -1109,49 +1163,6 @@ class Modules:
             ),
             name,
         )
-
-    async def unload_module(self, classname: str) -> typing.List[str]:
-        """Remove module and all stuff from it"""
-        worked = []
-
-        with contextlib.suppress(AttributeError):
-            _hikka_client_id_logging_tag = copy.copy(self.client.tg_id)  # noqa: F841
-
-        for module in self.modules:
-            if classname.lower() in (
-                module.name.lower(),
-                module.__class__.__name__.lower(),
-            ):
-                if not self._remove_core_protection and module.__origin__.startswith(
-                    "<core"
-                ):
-                    raise CoreUnloadError(module.__class__.__name__)
-
-                worked += [module.__class__.__name__]
-
-                name = module.__class__.__name__
-                path = os.path.join(
-                    LOADED_MODULES_DIR,
-                    f"{name}_{self.client.tg_id}.py",
-                )
-
-                if os.path.isfile(path):
-                    os.remove(path)
-                    logger.debug("Removed %s file at path %s", name, path)
-
-                logger.debug("Removing module %s for unload", module)
-                self.modules.remove(module)
-
-                await module.on_unload()
-
-                self.unregister_raw_handlers(module, "unload")
-                self.unregister_loops(module, "unload")
-                self.unregister_commands(module, "unload")
-                self.unregister_watchers(module, "unload")
-                self.unregister_inline_stuff(module, "unload")
-
-        logger.debug("Worked: %s", worked)
-        return worked
 
     def unregister_loops(self, instance: Module, purpose: str):
         for name, method in utils.iter_attrs(instance):
