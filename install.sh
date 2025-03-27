@@ -34,7 +34,7 @@ fi
 clear
 clear
 
-printf "\n\n\e[3;34;40m Start Hook Installing (Stable GitHub Version >= 1.0.0)...\e[0m\n\n"
+printf "\n\n\e[3;34;40m Start Hook Installing (Developer GitHub Version >= 1.1.0)...\e[0m\n\n"
 
 ##############################################################################
 
@@ -125,7 +125,7 @@ printf "\n\r\033[0;34mCloning repo...\e[0m"
 # shellcheck disable=SC2086
 ${SUDO_CMD}rm -rf Hook
 # shellcheck disable=SC2086
-runout ${SUDO_CMD}git clone https://github.com/HookDev-arch/Hook || {
+runout ${SUDO_CMD}git clone --branch dev https://github.com/HookDev-arch/Hook.git || {
 	errorout "Clone failed."
 	exit 3
 }
@@ -150,7 +150,7 @@ touch .setup_complete
 printf "\r\033[K\033[0;32mDependencies installed!\e[0m"
 printf "\n\033[0;32mStarting...\e[0m\n\n"
 
-${SUDO_CMD}"python$PYVER" -m hook --root "$@" || {
+${SUDO_CMD}"python$PYVER" -m hook --root --proxy-pass "$@" || {
 	printf "\033[1;31mPython scripts failed\e[0m"
 	exit 5
 }
