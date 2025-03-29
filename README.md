@@ -12,7 +12,7 @@
 For a quick and easy installation, run the following command from under **root** and follow the instructions of the installer:
 
 ```bash
-wget https://raw.githubusercontent.com/HookDev-arch/Hook/refs/heads/master/install.sh && chmod 777 install.sh && ./install.sh
+wget https://raw.githubusercontent.com/HookDev-arch/Hook/refs/heads/dev/install.sh && chmod 777 install.sh && ./install.sh
 ```
 
 ### Manual installation (without script)
