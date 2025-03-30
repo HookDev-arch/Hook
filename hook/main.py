@@ -1,6 +1,5 @@
 """Main script, where all the fun starts"""
 
-
 import argparse
 import asyncio
 import collections
@@ -694,17 +693,6 @@ class Hook:
 
         return bool(self.sessions)
 
-    async def amain_wrapper(self, client: CustomTelegramClient):
-        """Wrapper around amain"""
-        async with client:
-            first = True
-            me = await client.get_me()
-            client._tg_id = me.id
-            client.tg_id = me.id
-            client.hikka_me = me
-            while await self.amain(first, client):
-                first = False
-
     async def _badge(self, client: CustomTelegramClient):
         """Call the badge in shell"""
         try:
@@ -762,7 +750,6 @@ class Hook:
         except Exception:
             logging.exception("Badge error")
 
-
     async def _add_dispatcher(
         self,
         client: CustomTelegramClient,
@@ -798,6 +785,17 @@ class Hook:
             dispatcher.handle_raw,
             events.Raw(),
         )
+
+    async def amain_wrapper(self, client: CustomTelegramClient):
+        """Wrapper around amain"""
+        async with client:
+            first = True
+            me = await client.get_me()
+            client._tg_id = me.id
+            client.tg_id = me.id
+            client.hikka_me = me
+            while await self.amain(first, client):
+                first = False
 
     async def amain(self, first: bool, client: CustomTelegramClient):
         """Entrypoint for async init, run once for each user"""
@@ -837,7 +835,7 @@ class Hook:
             await self._badge(client)
 
         await client.run_until_disconnected()
-        
+
     def _init_web(self):
         """Initialize web"""
         if (
