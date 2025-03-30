@@ -579,6 +579,27 @@ class Web:
 
     async def modules_page(self, request: web.Request) -> web.Response:
         """Отображает страницу управления модулями"""
+        if not self._check_session(request):
+            return web.Response(text="Unauthorized", status=401)
+
+        # Проверяем, что self.loader установлен
+        if not hasattr(self, "loader"):
+            logger.error("Loader is not initialized yet")
+            return web.Response(
+                text="Internal Server Error: Loader is not initialized yet. Please wait a few seconds and try again.",
+                status=503,
+                content_type="text/html"
+            )
+
+        # Проверяем, что self.loader — это экземпляр Modules
+        from ..loader import Modules
+        if not isinstance(self.loader, Modules):
+            logger.error(f"self.loader is not an instance of Modules, got {type(self.loader)}")
+            return web.Response(
+                text="Internal Server Error: Loader is not properly initialized",
+                status=500,
+                content_type="text/html"
+            )
 
         # Получаем список модулей из loader
         modules = self.loader.modules
@@ -624,41 +645,41 @@ class Web:
                     border-radius: 5px;
                     cursor: pointer;
                     transition: background 0.3s ease;
-                }
+                 }
                 .delete-btn {
                     background: #ef4444;
                     color: #fff;
                 }
                 .delete-btn:hover {
-                    background: #dc2626;
+                background: #dc2626;
                 }
                 .restart-btn {
-                    background: #10b981;
+                 background: #10b981;
                     color: #fff;
                     margin: 20px auto;
                     display: block;
                 }
                 .restart-btn:hover {
-                    background: #059669;
-                }
+                background: #059669;
+                 }
                 .upload-form {
-                    text-align: center;
-                    margin: 20px 0;
+                text-align: center;
+                 margin: 20px 0;
                 }
                 input[type="file"] {
-                    padding: 10px;
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 5px;
-                    color: #fff;
+                   padding: 10px;
+                   background: rgba(255, 255, 255, 0.2);
+                  border-radius: 5px;
+                   color: #fff;
                 }
                 input[type="submit"] {
                     padding: 10px 20px;
-                    background: #3b82f6;
-                    color: #fff;
+                   background: #3b82f6;
+                   color: #fff;
                     border: none;
                     border-radius: 5px;
                     cursor: pointer;
-                }
+             }
                 input[type="submit"]:hover {
                     background: #1e3a8a;
                 }
@@ -668,40 +689,40 @@ class Web:
             <h1>Управление модулями Hook 🚀</h1>
 
             <div class="upload-form">
-                <form action="/upload_module" method="post" enctype="multipart/form-data">
-                    <input type="file" name="module_file" accept=".py" required>
-                    <input type="submit" value="Загрузить модуль">
-                </form>
+            <form action="/upload_module" method="post" enctype="multipart/form-data">
+                <input type="file" name="module_file" accept=".py" required>
+                <input type="submit" value="Загрузить модуль">
+            </form>
             </div>
 
             <table>
-                <tr>
-                    <th>Модуль</th>
-                    <th>Действия</th>
-                </tr>
+               <tr>
+                  <th>Модуль</th>
+                  <th>Действия</th>
+               </tr>
         """
 
         # Добавляем строки для каждого модуля
-        for mod in modules:
+      for mod in modules:
             mod_name = mod.strings.get("name", "Unknown")
             html += f"""
-                <tr>
-                    <td>{mod_name}</td>
-                    <td>
-                        <form action="/delete_module" method="post" style="display:inline;">
-                            <input type="hidden" name="module_name" value="{mod_name}">
+              <tr>
+                  <td>{mod_name}</td>
+                   <td>
+                       <form action="/delete_module" method="post" style="display:inline;">
+                          <input type="hidden" name="module_name" value="{mod_name}">
                             <button type="submit" class="delete-btn">Удалить</button>
-                        </form>
-                    </td>
-                </tr>
-            """
+                     </form>
+                 </td>
+               </tr>
+          """
 
         html += """
             </table>
 
             <form action="/restart" method="post">
-                <button type="submit" class="restart-btn">Перезапустить юзербота</button>
-            </form>
+               <button type="submit" class="restart-btn">Перезапустить юзербота</button>
+         </form>
         </body>
         </html>
         """
