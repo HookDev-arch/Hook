@@ -52,9 +52,9 @@ Scan the QR code to log in (secure and simple).
 ⸻
 
 💾 Requirements
-	•	Python 3.8+
-	•	Telegram API_ID & API_HASH from my.telegram.org/apps
-	•	Basic server/VPS or even your local PC
+1. Python 3.8+
+2. Telegram API_ID & API_HASH from my.telegram.org/apps
+3. Basic server/VPS or even your local PC
 
 ⸻
 
@@ -78,18 +78,18 @@ Scan the QR code to log in (secure and simple).
 ⸻
 
 🆕 Why Hook?
-	•	Always up to date: Last Telegram API features (reactions, video stickers)
-	•	Lightning-fast error fixes
-	•	Caching, improved entity rules, protection from leaks
-	•	Community-driven, open source & privacy focused
-	•	UI/UX made by Telegram power users
+1. Always up to date: Last Telegram API features (reactions, video stickers)
+2. Lightning-fast error fixes
+3. Caching, improved entity rules, protection from leaks
+4. Community-driven, open source & privacy focused
+5. UI/UX made by Telegram power users
 
 ⸻
 
 👥 Support & Community
-	•	Telegram Chat: @hookdev_arch_chat
-	•	News Channel: @hookdev_arch
-	•	Feedback, suggestions, module ideas — welcome!
+1. Telegram Chat: @hookdev_arch_chat
+2. News Channel: @hookdev_arch
+3. Feedback, suggestions, module ideas — welcome!
 
 ⸻
 
