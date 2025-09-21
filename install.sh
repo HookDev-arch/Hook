@@ -1,107 +1,97 @@
 #!/bin/bash
+set -e
 
-runin() {
-    { "$@" 2>>../Hook-install.log || return $?; } | while read -r line; do
-        printf "%s\n" "$line" >>../Hook-install.log
-    done
-}
-
-runout() {
-    { "$@" 2>>Hook-install.log || return $?; } | while read -r line; do
-        printf "%s\n" "$line" >>Hook-install.log
-    done
-}
-
-errorin() { cat ../Hook-install.log; }
-errorout() { cat Hook-install.log; }
-
+LOG="Hook-install.log"
 SUDO_CMD=""
-if [ ! x"$SUDO_USER" = x"" ]; then
-    if command -v sudo >/dev/null; then
-        SUDO_CMD="sudo -u $SUDO_USER "
-    fi
+
+# Цвета для красоты
+GREEN="\033[0;32m"
+RED="\033[1;31m"
+BLUE="\033[0;34m"
+YELLOW="\033[1;33m"
+NC="\033[0m" # reset
+
+# Логирование
+log() { echo -e "${BLUE}$1${NC}"; echo "$1" >>"$LOG"; }
+ok() { echo -e "${GREEN}$1${NC}"; echo "$1" >>"$LOG"; }
+err() { echo -e "${RED}$1${NC}" >&2; echo "$1" >>"$LOG"; }
+
+# Проверяем sudo
+if command -v sudo >/dev/null && [ "$(id -u)" -ne 0 ]; then
+    SUDO_CMD="sudo"
 fi
 
 clear
-clear
+echo -e "\n${BLUE}🚀 Starting Hook Installation (Stable GitHub Version >= 1.0.0)...${NC}\n"
+rm -f "$LOG" && touch "$LOG"
 
-printf "\n\n\e[3;34;40m Start Hook Installing (Stable GitHub Version >= 1.0.0)...\e[0m\n\n"
-
-touch Hook-install.log
-if [ ! x"$SUDO_USER" = x"" ]; then
-    chown "$SUDO_USER:" Hook-install.log
-fi
-
-if [ -d "Hook/Hook" ]; then
-    cd Hook || { printf "\rError: Install git package and re-run installer"; exit 6; }
-    DIR_CHANGED="yes"
-fi
-
-if [ -f ".setup_complete" ]; then
-    PYVER="3"
-    printf "\rExisting installation detected"
-    clear
-    "python$PYVER" -m hook "$@"
-    exit $?
-elif [ "$DIR_CHANGED" = "yes" ]; then
-    cd ..
-fi
-
-echo "Installing..." >Hook-install.log
-
-# Определяем пакетный менеджер
-if [ -f '/etc/debian_version' ]; then
-    PKGMGR="apt install -y"
-    runout dpkg --configure -a
-    runout apt update
-    PYVER="3"
+# Определяем ОС
+if [ -f /etc/debian_version ]; then
+    OS="debian"
+    PKG_INSTALL="$SUDO_CMD apt install -y"
+    UPDATE_CMD="$SUDO_CMD apt update"
+elif [ -f /etc/arch-release ]; then
+    OS="arch"
+    PKG_INSTALL="$SUDO_CMD pacman -S --noconfirm --needed"
+    UPDATE_CMD="$SUDO_CMD pacman -Sy"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macos"
+    PKG_INSTALL="brew install"
+    UPDATE_CMD="brew update"
 else
-    printf "\r\033[1;31mUnsupported OS.\e[0m Use manual installation: https://github.com/HookDev-arch/Hook"
+    err "❌ Unsupported OS. Install manually: https://github.com/HookDev-arch/Hook"
     exit 1
 fi
 
-# Устанавливаем базовые пакеты
-printf "\n\r\033[0;34mInstalling linux packages...\e[0m"
-runout $SUDO_CMD $PKGMGR python3 python3-pip python3-venv python3-dev git \
-    libwebp-dev libz-dev libjpeg-dev libopenjp2-7 libtiff5 \
-    ffmpeg imagemagick libffi-dev libcairo2 build-essential
+log "Detected OS: $OS"
+eval "$UPDATE_CMD"
 
-# Устанавливаем pip, если его нет
-if ! command -v pip3 >/dev/null 2>&1; then
-    runout $SUDO_CMD python3 -m ensurepip --upgrade
-    runout $SUDO_CMD python3 -m pip install --upgrade pip
-else
-    runout $SUDO_CMD python3 -m pip install --upgrade pip
+# Установка системных пакетов
+log "📦 Installing system packages..."
+case $OS in
+    debian)
+        $PKG_INSTALL python3 python3-pip python3-venv python3-dev git \
+            libwebp-dev libz-dev libjpeg-dev libopenjp2-7 libtiff5 \
+            ffmpeg imagemagick libffi-dev libcairo2 build-essential
+        ;;
+    arch)
+        $PKG_INSTALL python python-pip python-virtualenv git \
+            libwebp libjpeg libtiff openjpeg2 ffmpeg imagemagick \
+            libffi cairo base-devel
+        ;;
+    macos)
+        $PKG_INSTALL git python webp jpeg libtiff openjpeg ffmpeg imagemagick cairo libffi
+        ;;
+esac
+ok "✔ System packages installed!"
+
+# Проверка python/pip
+if ! command -v python3 >/dev/null; then
+    err "Python3 not found!"
+    exit 2
 fi
+$SUDO_CMD python3 -m pip install --upgrade pip setuptools wheel >>"$LOG" 2>&1
 
-printf "\r\033[K\033[0;32mPackages installed!\e[0m"
-printf "\n\r\033[0;34mCloning repo...\e[0m"
+# Клонирование репозитория
+log "🔄 Cloning Hook repository..."
+rm -rf Hook
+git clone https://github.com/HookDev-arch/Hook >>"$LOG" 2>&1
+cd Hook || { err "❌ Clone failed"; exit 3; }
+ok "✔ Repo cloned!"
 
-# Удаляем старую папку и клонируем репо
-${SUDO_CMD}rm -rf Hook
-runout ${SUDO_CMD}git clone https://github.com/HookDev-arch/Hook || {
-    errorout "Clone failed."
-    exit 3
-}
-cd Hook || { printf "\r\033[0;33mRun: pkg install git и перезапусти установщик"; exit 7; }
-
-printf "\r\033[K\033[0;32mRepo cloned!\e[0m"
-printf "\n\r\033[0;34mInstalling python dependencies...\e[0m"
-
-# Устанавливаем зависимости глобально
-runin $SUDO_CMD python3 -m pip install --upgrade setuptools wheel
-runin $SUDO_CMD python3 -m pip install -r requirements.txt --upgrade --no-warn-script-location --disable-pip-version-check || {
-    errorin "Requirements failed!"
+# Установка Python зависимостей
+log "🐍 Installing Python dependencies..."
+$SUDO_CMD python3 -m pip install -r requirements.txt --upgrade --no-warn-script-location  --disable-pip-version-check >>"$LOG" 2>&1 || {
+    err "❌ Requirements installation failed!"
     exit 4
 }
+ok "✔ Python dependencies installed!"
 
-rm -f ../Hook-install.log
 touch .setup_complete
 
-printf "\r\033[K\033[0;32mDependencies installed!\e[0m"
-printf "\n\033[0;32mStarting...\e[0m\n\n"
-
-${SUDO_CMD}python3 -m hook --root "$@" || {
-    printf "\033[1;31mPython scripts failed\e[0m"
+# Запуск Hook
+echo -e "\n${GREEN}🚀 Starting Hook...${NC}\n"
+$SUDO_CMD python3 -m hook --root "$@" || {
+    err "❌ Hook failed to start."
     exit 5
 }
