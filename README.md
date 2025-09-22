@@ -23,113 +23,141 @@ Modern, modular, and easy to install.</b></p>
 
 ## 🚀 Quick Start
 
-### 🟢 **Fast Automated Script (recommended)**
-> <sup>For Linux/macOS (root or sudo)</sup>
+### 🟢 **Fast Automated Script (Linux/macOS)**
+> <sup>Just copy and paste into terminal</sup>
 
 ```bash
 wget https://raw.githubusercontent.com/HookDev-arch/Hook/master/install.sh && chmod +x install.sh && ./install.sh
+````
+
+---
+
+## 🍎 macOS Manual Installation (via Homebrew)
+
+```bash
+# Step 1: Install Homebrew (if not yet)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Step 2: Install Python and Git
+brew install python git
+
+# Step 3: Clone the repo
+git clone https://github.com/HookDev-arch/Hook && cd Hook
+
+# Step 4: Create and activate venv (optional but recommended)
+python3 -m venv .venv && source .venv/bin/activate
+
+# Step 5: Install dependencies
+pip install -r requirements.txt
+
+# Step 6: Run Hook userbot
+python3 -m hook --root
 ```
 
-🛠️ Manual Setup
+---
 
-For advanced users or unsupported OS:
+## 🐧 Linux Manual Setup (Debian/Ubuntu)
 
-# For Debian/Ubuntu
 ```bash
 apt update && apt install -y git libcairo2 python3 python3-pip && \
 git clone https://github.com/HookDev-arch/Hook && cd Hook && \
 pip3 install -r requirements.txt && python3 -m hook --root
 ```
 
-macOS: Use Homebrew for dependencies.
-Arch: Use pacman to install required libraries.
+---
 
-🌍 Web Interface
+## 🌍 Web Interface
 
-After launch (--proxy-pass), open the web-link provided in console.
-Scan the QR code to log in (secure and simple).
+After running with `--proxy-pass`, a web dashboard link will appear in the terminal.
 
-⸻
+✅ Use it to:
 
-💾 Requirements
+* Authenticate via QR code
+* Manage modules and settings
+* Connect multiple accounts
+
+---
+
+## 💾 Requirements
+
 1. Python 3.8+
-2. Telegram API_ID & API_HASH from my.telegram.org/apps
-3. Basic server/VPS or even your local PC
+2. `API_ID` & `API_HASH` from [my.telegram.org](https://my.telegram.org/apps)
+3. A VPS, server, or even your local computer (macOS/Windows/Linux)
 
-⸻
+---
 
-✨ Features
+## ✨ Features
+
 ```python
-1. 🎛️ Web Dashboard: Easy setup and management in browser
-2. ⚡ Interactive Forms: Buttons, inputs — forget boring commands!
-3. 🖼️ Galleries & Media: View photo galleries, videos, files — right in Telegram.
-4. 🤖 Inline Bot Mode: Share functions with friends via @YourBotName.
-5. 📝 Multi-account: Connect main & alt accounts in one place.
-6. 🚨 Logs in chat: Get error tracebacks instantly.
-7. 💡 Module support: Compatible with FTG, GeekTG, Dragon modules & Hikka.
- ```
+1. 🎛️ Web Dashboard: Control the bot right from your browser
+2. ⚡ Interactive Forms: Buttons, inputs, inline forms
+3. 🖼️ Galleries & Media: Send, browse, and manage media easily
+4. 🤖 Inline Bot Mode: Share module actions via @BotName
+5. 📝 Multi-account: Use multiple Telegram accounts in one instance
+6. 🚨 Log system: Catch errors and crashes instantly in chat
+7. 🧩 Module system: Load FTG, Dragon, GeekTG & Hikka-compatible mods
+```
 
 <p align="center">
   <img src="https://static.vecteezy.com/system/resources/previews/022/418/264/original/3d-isometric-web-hosting-server-transparent-background-free-png.png" width="35%" alt="Hook in Action">
 </p>
 
+---
 
+## 🆕 Why Hook?
 
-⸻
+* 🔁 Always in sync with latest Telegram features (reactions, threads, etc.)
+* ⚡ Lightning-fast bug fixes and community input
+* 🔐 Privacy-first: optional logging, sandboxed modules
+* 🧠 Smart entity resolution, fast API wrapper
+* 🖌️ Designed by and for power users of Telegram
 
-🆕 Why Hook?
-1. Always up to date: Last Telegram API features (reactions, video stickers)
-2. Lightning-fast error fixes
-3. Caching, improved entity rules, protection from leaks
-4. Community-driven, open source & privacy focused
-5. UI/UX made by Telegram power users
+---
 
-⸻
+## 👥 Support & Community
 
-👥 Support & Community
-1. Telegram Chat: @hookdev_arch_chat
-2. News Channel: @hookdev_arch
-3. Feedback, suggestions, module ideas — welcome!
+* 💬 Chat: [@hookdev\_arch\_chat](https://t.me/hookdev_arch_chat)
+* 📢 Channel: [@hookdev\_arch](https://t.me/hookdev_arch)
+* 🧠 Got feedback or a module idea? — You're welcome!
 
-⸻
+---
 
-🏆 Credits & Acknowledgements
+## 🏆 Credits & Acknowledgements
 
-Hook is built on the shoulders of giants — thank you to:
+Hook wouldn’t be possible without:
 
-	•	Hikariatama — Original Hikka inspiration
-	•	Hackintosh5 — FTG core modules
-	•	Lonami — Telethon engine
-	•	Dan — Pyrogram integration
-	•	The entire Hook community for bug reports, testing and memes 🎉
+* 🧠 **@hikariatama** — Original Hikka core & inspiration
+* 🛠️ **@Hackintosh5** — FTG module architecture
+* ⚙️ **@Lonami** — Telethon, the magic engine
+* 🔗 **@Dan** — Pyrogram integration
+* ❤️ **Hook community** — testers, debuggers, designers, meme lords
 
-⸻
+---
 
-⚠️ Disclaimer & Safety
+## ⚠️ Disclaimer & Safety
 
-❗ Hook is provided “as is” — you use at your own risk.
+> ❗ You use Hook at your own risk.
 
-	•	Devs are NOT responsible for bans, leaks, or deleted messages.
-	•	Always review third-party modules before installation.
-	•	For privacy: enable .api_fw_protection and read Telegram API Terms.
+* We’re **not responsible** for Telegram bans, data loss, or leaks.
+* Always **review modules** before installation — 3rd-party code can be dangerous.
+* For enhanced privacy:
 
-By using Hook, you accept all responsibility for your actions.
+```bash
+.api_fw_protection on
+```
 
-⸻
+> By installing Hook, you accept full responsibility for its usage.
 
+---
 
 <p align="center">
   <img src="https://img.icons8.com/color/96/rocket--v1.png" width="64" title="Rocket"><br>
   <b>Hook — your Telegram super-assistant. <br> Unleash Telegram’s full power!</b>
 </p>
 
-
-
-⸻
-
+---
 
 <p align="center"><sub>
-Not affiliated with Telegram™. For fun & productivity only.<br>
+Not affiliated with Telegram™. For productivity and fun only.<br>
 Made with ❤️ by <a href="https://t.me/hookdev_arch">HookDev Arch</a> and the community.
 </sub></p>
-
