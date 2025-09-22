@@ -61,7 +61,7 @@ python3 -m hook --root
 ```bash
 apt update && apt install -y git libcairo2 python3 python3-pip && \
 git clone https://github.com/HookDev-arch/Hook && cd Hook && \
-pip3 install -r requirements.txt && python3 -m hook --root
+pip3 install -r requirements.txt --break-system-packages && python3 -m hook --root
 ```
 
 ---
