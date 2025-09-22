@@ -1,6 +1,6 @@
 """Represents current Hook userbot version"""
 
-__version__ = (3, 0, 0)
+__version__ = (3, 1, 0)
 
 import os
 
@@ -12,4 +12,5 @@ try:
     ).active_branch.name
 except Exception:
     branch = "master"
+
 
