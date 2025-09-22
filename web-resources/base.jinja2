@@ -1,13 +1,29 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
   <head>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+    <meta charset="utf-8">
     <title>Hook userbot</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <link rel="icon" href="https://github.com/hikariatama/assets/raw/master/cherry-blossom_1f338.png">
+
+    <!-- Неоновые и стеклянные шрифты -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Josefin+Sans:400,600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Hubballi&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:wght@300&display=swap">
+
+    <!-- Оригинальные стили (оставь base.min.css и sakura, если требуется) -->
+    <link rel="stylesheet" href="{{ static('base.min.css') }}">
+    <link rel="stylesheet" href="{{ static('sakura.min.css') }}">
+    <!-- Новый неоновый стиль -->
+    <link rel="stylesheet" href="{{ static('neon-glass.css') }}">
+
+    <!-- Оставляем только нужные иконки -->
+    <link href="https://css.gg/css?=arrow-right-r|add|brackets|chevron-right-o|smartphone" rel="stylesheet">
+
+    <!-- Скрипты -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="icon" href="https://github.com/hikariatama/assets/raw/master/cherry-blossom_1f338.png">
     {% block head %}{% endblock %}
   </head>
   <body>
