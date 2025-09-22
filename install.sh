@@ -51,7 +51,7 @@ log "📦 Installing system packages..."
 case $OS in
     debian)
         $PKG_INSTALL python3 python3-pip python3-venv python3-dev git \
-            libwebp-dev libz-dev libjpeg-dev libopenjp2-7 libtiff5 \
+            libwebp-dev libz-dev libjpeg-dev libopenjp2-7 \
             ffmpeg imagemagick libffi-dev libcairo2 build-essential
         ;;
     arch)
