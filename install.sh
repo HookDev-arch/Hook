@@ -22,7 +22,7 @@ if command -v sudo >/dev/null && [ "$(id -u)" -ne 0 ]; then
 fi
 
 clear
-echo -e "\n${BLUE}🚀 Starting Hook Installation (Stable GitHub Version >= 1.0.0)...${NC}\n"
+echo -e "\n${BLUE}🚀 Starting Hook 3.1 Installation...${NC}\n"
 rm -f "$LOG" && touch "$LOG"
 
 # Определяем ОС
@@ -51,8 +51,9 @@ log "📦 Installing system packages..."
 case $OS in
     debian)
         $PKG_INSTALL python3 python3-pip python3-venv python3-dev git \
-            libwebp-dev libz-dev libjpeg-dev libopenjp2-7 \
-            ffmpeg imagemagick libffi-dev libcairo2 build-essential
+            libwebp-dev zlib1g-dev libjpeg-dev libopenjp2-7 \
+            ffmpeg imagemagick libffi-dev libcairo2 build-essential \
+            libtiff-dev
         ;;
     arch)
         $PKG_INSTALL python python-pip python-virtualenv git \
