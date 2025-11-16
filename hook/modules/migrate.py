@@ -1,6 +1,10 @@
 # meta developer: @HookDevArch
 # meta desc: Миграция Hook UserBot на новый сервер по SSH + SFTP
 
+__version__ = (1, 3, 0)
+
+# requires: paramiko
+
 import asyncio
 import os
 import tarfile
