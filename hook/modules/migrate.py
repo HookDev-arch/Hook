@@ -1,11 +1,10 @@
 # meta developer: @HookDevArch
 # meta desc: Миграция Hook UserBot на новый сервер по SSH + SFTP
 
-__version__ = (1, 4, 5)
+__version__ = (1, 5, 0)
 
 # requires: paramiko
 
-import asyncio
 import os
 import tarfile
 import tempfile
@@ -29,7 +28,7 @@ STEPS = [
 ]
 
 
-def progress(step):
+def progress(step: int) -> str:
     done = "■" * step
     rest = "□" * (9 - step)
     percent = int(step / 9 * 100)
@@ -45,12 +44,9 @@ class HookMigrateMod(loader.Module):
     # -------------------------
     # ПОИСК КАТАЛОГА HOOK
     # -------------------------
-    def find_hook_dir(self):
-        # Главный путь (реальный)
+    def find_hook_dir(self) -> str:
         possible_paths = [
-            "/root/Hook",
-
-            # fallback для установок в подпапке
+            "/root/Hook",  # твой реальный путь
             os.path.join(utils.get_base_dir(), "Hook"),
             os.path.join(os.path.dirname(utils.get_base_dir()), "Hook"),
         ]
@@ -65,23 +61,41 @@ class HookMigrateMod(loader.Module):
         )
 
     # -------------------------
-    # УПАКОВКА HOOK
+    # УПАКОВКА HOOK (БЕЗ .venv!)
     # -------------------------
-    def pack_hook(self):
+    def pack_hook(self) -> str:
         hook_dir = self.find_hook_dir()
 
         tmp = tempfile.gettempdir()
         archive = os.path.join(tmp, "hook_migrate.tar.gz")
 
+        # Пакуем только код, без виртуалок и кешей
         with tarfile.open(archive, "w:gz") as tar:
-            tar.add(hook_dir, arcname="Hook")
+            for root, dirs, files in os.walk(hook_dir):
+                # Не тянем .venv
+                if ".venv" in dirs:
+                    dirs.remove(".venv")
+
+                # Не тянем __pycache__
+                if "__pycache__" in dirs:
+                    dirs.remove("__pycache__")
+
+                rel_root = os.path.relpath(root, hook_dir)
+                for name in files:
+                    full_path = os.path.join(root, name)
+                    if rel_root == ".":
+                        arcname = os.path.join("Hook", name)
+                    else:
+                        arcname = os.path.join("Hook", rel_root, name)
+
+                    tar.add(full_path, arcname=arcname)
 
         return archive
 
     # -------------------------
-    # SSH выполнение команд
+    # ВЫПОЛНЕНИЕ КОМАНД ПО SSH
     # -------------------------
-    async def exec(self, ssh, cmd):
+    async def exec(self, ssh: paramiko.SSHClient, cmd: str) -> str:
         stdin, stdout, stderr = ssh.exec_command(cmd)
         _ = stdout.read()
         err = stderr.read().decode().strip()
@@ -100,33 +114,35 @@ class HookMigrateMod(loader.Module):
         if not args or "@" not in args or ":" not in args:
             return await utils.answer(
                 message,
-                "<b>Использование:</b> .migrate user@host:22:password",
+                "<b>Использование:</b> <code>.migrate user@host:22:password</code>",
             )
 
-        # Парсим
         user_host, port, password = args.split(":")
         user, host = user_host.split("@")
         port = int(port)
 
         msg = await utils.answer(message, "🚀 Начинаю миграцию...")
 
-        async def step(n, extra=""):
+        async def step(n: int, extra: str = ""):
             text = f"🔄 <b>Миграция Hook</b>\n\n{progress(n)}"
             if extra:
                 text += "\n" + extra
             await utils.answer(msg, text)
 
         # ----------------------------
-        # 1. УПАКОВКА
+        # 1. УПАКОВКА HOOK
         # ----------------------------
         await step(1)
         try:
             archive = self.pack_hook()
         except Exception as e:
-            return await utils.answer(msg, f"❌ Ошибка упаковки: {e}")
+            return await utils.answer(
+                msg,
+                f"❌ <b>Ошибка упаковки Hook:</b>\n<code>{utils.escape_html(str(e))}</code>",
+            )
 
         # ----------------------------
-        # 2. SSH
+        # 2. SSH ПОДКЛЮЧЕНИЕ
         # ----------------------------
         await step(2)
         try:
@@ -135,7 +151,10 @@ class HookMigrateMod(loader.Module):
             ssh.connect(host, port=port, username=user, password=password)
             sftp = ssh.open_sftp()
         except Exception as e:
-            return await utils.answer(msg, f"❌ Ошибка SSH: {e}")
+            return await utils.answer(
+                msg,
+                f"❌ <b>Ошибка SSH-подключения:</b>\n<code>{utils.escape_html(str(e))}</code>",
+            )
 
         # ----------------------------
         # 3. ПЕРЕДАЧА АРХИВА
@@ -147,7 +166,10 @@ class HookMigrateMod(loader.Module):
             sftp.put(archive, remote_archive)
             sftp.close()
         except Exception as e:
-            return await utils.answer(msg, f"❌ Ошибка SFTP: {e}")
+            return await utils.answer(
+                msg,
+                f"❌ <b>Ошибка передачи архива:</b>\n<code>{utils.escape_html(str(e))}</code>",
+            )
 
         # ----------------------------
         # 4. ДОМАШНЯЯ ДИРЕКТОРИЯ
@@ -157,53 +179,73 @@ class HookMigrateMod(loader.Module):
         home_dir = stdout.read().decode().strip()
 
         if not home_dir:
-            home_dir = f"/Users/{user}"
+            home_dir = f"/Users/{user}"  # fallback для macOS
 
-        # Определяем ОС
+        # Определение ОС
         stdin, stdout, stderr = ssh.exec_command("uname")
         osname = stdout.read().decode().strip()
         is_mac = osname == "Darwin"
 
         # ----------------------------
-        # 5–7. УСТАНОВКА И ЗАПУСК HOOK
+        # 5–7. УСТАНОВКА И ЗАПУСК
         # ----------------------------
         await step(5)
 
+        # Лог файл на новом сервере
+        install_log = "/tmp/hook_migrate_install.log"
+
         if is_mac:
             install = f"""
-mkdir -p {home_dir}/Hook &&
-tar -xzf /tmp/hook_migrate.tar.gz -C {home_dir} &&
-cd {home_dir}/Hook &&
-brew install python git || true &&
-python3 -m venv .venv &&
-source .venv/bin/activate &&
-pip install -r requirements.txt &&
-python3 -m hook --root
+set -e
+LOG="{install_log}"
+echo "=== Hook migrate begin (macOS) ===" > "$LOG"
+mkdir -p "{home_dir}/Hook" >>"$LOG" 2>&1
+tar -xzf "{remote_archive}" -C "{home_dir}" >>"$LOG" 2>&1
+cd "{home_dir}/Hook" >>"$LOG" 2>&1
+brew install python git >>"$LOG" 2>&1 || true
+python3 -m venv .venv >>"$LOG" 2>&1
+source .venv/bin/activate >>"$LOG" 2>&1
+pip install --upgrade pip wheel setuptools >>"$LOG" 2>&1
+pip install -r requirements.txt >>"$LOG" 2>&1
+python3 -m hook --root >>"$LOG" 2>&1
 """
         else:
             install = f"""
-mkdir -p {home_dir}/Hook &&
-tar -xzf /tmp/hook_migrate.tar.gz -C {home_dir} &&
-cd {home_dir}/Hook &&
-sudo apt update &&
-sudo apt install -y git libcairo2 python3 python3-pip &&
-pip3 install -r requirements.txt --break-system-packages &&
-python3 -m hook --root
+set -e
+LOG="{install_log}"
+echo "=== Hook migrate begin (Linux) ===" > "$LOG"
+mkdir -p "{home_dir}/Hook" >>"$LOG" 2>&1
+tar -xzf "{remote_archive}" -C "{home_dir}" >>"$LOG" 2>&1
+cd "{home_dir}/Hook" >>"$LOG" 2>&1
+sudo apt update >>"$LOG" 2>&1
+sudo apt install -y git libcairo2 python3 python3-pip >>"$LOG" 2>&1
+python3 -m venv .venv >>"$LOG" 2>&1
+source .venv/bin/activate >>"$LOG" 2>&1
+pip install --upgrade pip wheel setuptools >>"$LOG" 2>&1
+pip install -r requirements.txt >>"$LOG" 2>&1
+python3 -m hook --root >>"$LOG" 2>&1
 """
 
-        err = await self.exec(ssh, install)
+        # Выполняем установку под sh -lc
+        err = await self.exec(ssh, f"/bin/sh -lc '{install}'")
         if err:
-            await step(5, f"<b>Предупреждение:</b>\n<code>{err}</code>")
+            await step(
+                5,
+                f"⚠️ <b>Предупреждение при установке:</b>\n<code>{utils.escape_html(err)}</code>\n"
+                f"<i>Подробный лог на новом сервере:</i> <code>{install_log}</code>",
+            )
 
-        # Проверяем запуск
+        # Проверяем, что Hook реально запустился
         stdin, stdout, stderr = ssh.exec_command("pgrep -f 'python3 -m hook'")
         new_pid = stdout.read().decode().strip()
 
         if not new_pid:
+            ssh.close()
             return await utils.answer(
                 msg,
                 "⚠️ <b>Hook НЕ запустился на новом сервере.</b>\n"
-                "Отключение старого инстанса ОТМЕНЕНО."
+                f"Проверь лог на новом сервере: <code>{install_log}</code>\n"
+                "Старый инстанс НЕ будет отключён.",
             )
 
         ssh.close()
@@ -215,11 +257,11 @@ python3 -m hook --root
         await utils.answer(
             msg,
             "✅ <b>Hook успешно запущен на новом сервере.</b>\n"
-            "Старый инстанс будет отключён."
+            "Старый инстанс будет отключён.",
         )
 
         # ----------------------------
-        # *Вариант A: мягкое завершение*
+        # ГРАЦИОЗНОЕ ЗАВЕРШЕНИЕ (вариант A)
         # ----------------------------
         try:
             with contextlib.suppress(Exception):
@@ -235,7 +277,7 @@ python3 -m hook --root
             pass
 
         # ----------------------------
-        # *Вариант C: аварийное завершение*
+        # FALLBACK (вариант C)
         # ----------------------------
         try:
             os.kill(os.getpid(), signal.SIGKILL)
