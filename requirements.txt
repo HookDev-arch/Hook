@@ -1,6 +1,7 @@
 # --- Hikka core ---
 Hikka-TL-New==2.0.8
 Hikka-Pyro-New==2.0.103
+paramiko
 
 # --- Async / IO ---
 aiofile==3.8.1
